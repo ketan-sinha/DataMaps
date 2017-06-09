@@ -16,10 +16,11 @@ On Mac OS or Linux:
 
 `curl https://install.meteor.com/ | sh`
 
-* Data Folder: It expects a certain data folder structure. `/hnet/incoming/current` + `/hnet/outgoing/current` should exist.
+* Data Folder with correct permissions: A certain data folder structure is expected. `/hnet/incoming/current` + `/hnet/outgoing` should exist. Also, folders for incoming data from each site need to exists when sites have been created.
 
-For pushing data out the server is using [lftp](https://lftp.yar.ru/) which must be installed.
+* For pushing data out, the server is using [lftp](https://lftp.yar.ru/) which must be installed.
 
+Note: The bootstraping data that is in the repository doesn't work correctly if the data folder have not been setup correctly.
 
 ## Getting started
 
