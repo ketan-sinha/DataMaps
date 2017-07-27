@@ -13,7 +13,7 @@ var makeObj = function(keys, startIndex, previousObject) {
     method: keys[4], 
     units: keys[5],
     value: keys[6],
-    flag: keys[7],
+    flag: [keys[7]],
     slope: keys[9],
     intercept: keys[10]
   };
@@ -121,32 +121,83 @@ var batchTCEQDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
         singleObj.epoch = epoch;
         singleObj.timestamp = moment(parsedLines[k][1].toString(),
                                          "YYYYMMDDHHmmss").format(
-                                           "dddd, MMMM Do YYYY, h:mm:ss a" //Monday, July 17th 2017, 1:44:52 pm
-                                         );
-        logger.info("timestamp: " + singleObj.timestamp.toString());
+                                           "dddd, MMMM Do YYYY, h:mm:ss a"); //Monday, July 17th 2017, 1:44:52 pm                     
+        // logger.info("timestamp: " + singleObj.timestamp.toString());
         // logger.info('epoch is ' + epoch.toString());
         // singleObj.epoch5min = epoch - (epoch % 300);
         singleObj.site = parsedLines[k][0];
         singleObj.file = pathArray[pathArray.length - 1];
         singleObj._id = parsedLines[k][0] + '_' + parsedLines[k][1];
-        let method = parsedLines[k][4];
-        let measurement = parsedLines[k][2];
+        // let method = parsedLines[k][4];
+        // let measurement = parsedLines[k][2];
         let $set = {};
-        $set[`subTypes.${method}.${measurement}`] = makeObj(parsedLines[k], 1);
+        let obj = makeObj(parsedLines[k], 1);
+        // $set[`subTypes.${obj.method}.${obj.measurement}`] = obj;
         // allObjects.push(singleObj);
-        TCEQData.update(
-          {
-            _id: singleObj._id,
-            epoch: singleObj.epoch,
-            timestamp: singleObj.timestamp
-          },
-          {
-            $set: $set
-          },
-          {
-            upsert: true
-          }
-        );
+        // TCEQData.update(
+        //   {
+        //     _id: singleObj._id,
+        //     epoch: singleObj.epoch,
+        //     timestamp: singleObj.timestamp
+        //   },
+        //   {
+        //     $set: $set
+        //   },
+        //   {
+        //     upsert: true
+        //   }
+        // );
+        let found = TCEQData.findOne({
+          _id: singleObj._id,
+          subTypes: {$elemMatch: {measurement: obj.measurement, poc: obj.poc}}
+        }) != null;
+
+        if (found) {
+          // This measurement and POC already exist in the DB
+          // Update the single measurement (embedded doc) to new field values
+          // Note: append the new flag instead of overwrite
+          logger.info("Found: " + singleObj._id +" " + obj.measurement + " " + obj.poc);
+          TCEQData.update(
+            {
+              _id: singleObj.id,
+              "subTypes.measurement": obj.measurement,
+              "subTypes.poc": obj.poc
+            },
+            { 
+              $set: {
+                "subTypes.$.measurement": obj.measurement,
+                "subTypes.$.poc": obj.poc,
+                "subTypes.$.method": obj.method, 
+                "subTypes.$.units": obj.units,
+                "subTypes.$.value": obj.value,
+                "subTypes.$.slope": obj.slope,
+                "subTypes.$.intercept": obj.intercept
+              },
+              $push: {
+                "subTypes.$.flag": obj.flag[0] 
+              }
+            },
+            function(error, result){
+              console.log(obj);
+              console.log(result);
+            }
+          );
+
+        } else {
+          // This measurement and POC do not exist in the DB yet
+          // Push the measurement (embedded doc) to the subtypes array
+          TCEQData.update(
+            {
+              _id: singleObj._id,
+              epoch: singleObj.epoch,
+              timestamp: singleObj.timestamp,
+              site: singleObj.site
+            },
+            { $push: { subTypes: obj } },
+            { upsert: true }
+          );
+        }
+        
         previousObject = singleObj;
         //let singleObj = {};
 
