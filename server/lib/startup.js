@@ -7,11 +7,11 @@ logger.info(`Winston logs are being captured on the console for host: ${require(
 
 Meteor.startup(function() {
   // Insert sample data if the live site collection is empty
-  if (LiveSites.find().count() === 0) {
-    JSON.parse(Assets.getText('livesites.json')).site.forEach(function(doc) {
-      LiveSites.insert(doc);
-    });
-  }
+  // if (LiveSites.find().count() === 0) {
+  //   JSON.parse(Assets.getText('livesites.json')).site.forEach(function(doc) {
+  //     LiveSites.insert(doc);
+  //   });
+  // }
 
   // Create directory for outgoing files for tomorrow
   fs.mkdirs(`/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date() + 1}`, function (err) {
