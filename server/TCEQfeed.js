@@ -156,10 +156,11 @@ var batchTCEQDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
           // This measurement and POC already exist in the DB
           // Update the single measurement (embedded doc) to new field values
           // Note: append the new flag instead of overwrite
-          logger.info("Found: " + singleObj._id +" " + obj.measurement + " " + obj.poc);
+          logger.info("Found: " + singleObj._id + " " + obj.measurement + " " + obj.poc);
+          logger.info("obj.flag[0]: " + obj.flag[0]);
           TCEQData.update(
             {
-              _id: singleObj.id,
+              _id: singleObj._id,
               "subTypes.measurement": obj.measurement,
               "subTypes.poc": obj.poc
             },
@@ -176,11 +177,12 @@ var batchTCEQDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
               $push: {
                 "subTypes.$.flag": obj.flag[0] 
               }
-            },
-            function(error, result){
-              console.log(obj);
-              console.log(result);
             }
+            // },
+            // function(error, result){
+            //   console.log(obj);
+            //   console.log(result);
+            // }
           );
 
         } else {
